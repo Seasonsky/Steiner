@@ -11,7 +11,6 @@ const int BOTTOM = 4;
 class Point {
  public:
   Point();
-  void print();
   int x;
   int y;
 };
@@ -40,7 +39,7 @@ class Plane {
 
 class Graph {
  public:
-  Graph(); 
+  Graph();
   void get_degree();
   void get_boundaries();
   void get_left();
@@ -73,15 +72,16 @@ class RMST {
   int is_one(Graph& graph); // 0-nothing; 1-left; 2-right; 3-top; 4-bottom;
   bool check_exist_point(const Point& point, const Graph& graph);
   void add_single_edge(Graph& graph, int direction);
-  Node* trees_head;
-  void output_trees(const Plane& plane);
+  Node* tree_queue_head;
 };
 class Utilities {
  public:
-  void output_vector_points(vector<Point> points);
-  void output_graph(Graph* graph);
-  void output_graph_vertices(Graph* graph);
-  void output_graph_edges(Graph* graph);
-  void output_graph_boundaries(Graph* graph);
+  void output_tree_queue(const Plane& plane, const RMST& rmst);
+  void output_graph_boundaries(const Graph& graph);
   void output_steiner_tree_diagram(const Plane& plane, const Graph& graph);
 };
+ostream& operator<<(ostream& out, const Point& point);
+ostream& operator<<(ostream& out, const Edge& edge);
+ostream& operator<<(ostream& out, const vector<Point>& points);
+ostream& operator<<(ostream& out, const Graph& graph); 
+ostream& operator<<(ostream& out, const vector<Edge> edges);

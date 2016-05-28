@@ -7,9 +7,6 @@ Point::Point() {
   x = 0;
   y = 0;
 }
-void Point::print(){
-  cout << endl << "Point(" << x <<","<<y<<")"<<endl;
-}
 
 // Edge
 Edge::Edge() {
@@ -43,7 +40,34 @@ Plane::Plane() {
   p.y=5;
   terminals.push_back(p);
 }
-
+ostream& operator<<(ostream& out, const Point& point) {
+  out << "<" << point.x <<"," << point.y << "> "; 
+  return out;
+}
+ostream& operator<<(ostream& out, const Edge& edge) {
+  string str;
+  switch(edge.shape) {
+    case LEFT: str = "LEFT"; break;
+    case RIGHT: str = "RIGHT"; break;
+    case TOP: str = "TOP"; break;
+    case BOTTOM: str = "BOTTOM"; break;
+    default: cout << endl << "! edge_shape !" << endl; exit(0);
+  }
+  out << "(<" << edge.start.x <<","<<edge.start.y<<">,"<<"<"<<edge.end.x<<","<<edge.end.y<<"> : " <<str<<") "; 
+}
+ostream& operator<<(ostream& out, const vector<Point>& points) {
+  for(int i=0; i<points.size(); i++) {
+    out << points[i];  
+  }
+  out << endl;
+  return out;
+}
+ostream& operator<<(ostream& out, const vector<Edge> edges) {
+  for(int i=0; i<edges.size(); i++) {
+    cout << edges[i]; 
+  }
+  out << endl;
+}
 // Graph
 Graph::Graph() {
   vertices.clear();
@@ -74,6 +98,16 @@ void Graph::get_left() {
       lefts.push_back(i);
     }
   }
+}
+
+ostream& operator<<(ostream& out, const Graph& graph) {
+  out << endl << "--- graph ---" << endl;
+  out << "vertices("<<graph.vertices.size()<<") = "; 
+  out << graph.vertices;
+  out << "edges("<<graph.edges.size() << ") = ";
+  out << graph.edges;
+  out << endl;
+  return out;
 }
 
 // get MaxX
@@ -127,10 +161,10 @@ RMST::RMST(const Plane& plane) {
   Node* new_node = new Node;
   new_node->graph.vertices = plane.terminals;
   new_node->next = NULL;
-  trees_head = new_node;
+  tree_queue_head = new_node;
 }
 void RMST::travel_trees() {
-  Node* list = trees_head;
+  Node* list = tree_queue_head;
   while(list) {
     cout << endl << "--- travel_trees ---" << endl;
     process_one(list->graph);
@@ -141,7 +175,6 @@ void RMST::process_one(Graph& graph) {
   int type = -1;
    do {
       type = is_one(graph);
-      cout << endl << "type= " << type << endl;
       if(type == LEFT) {
         process_one_left(graph);
         graph.get_boundaries();
@@ -196,26 +229,20 @@ void RMST::add_single_edge(Graph& graph, int direction) {
         exit(0);
     }
     edge.start = graph.vertices[index];
-    cout << endl <<"index= "<<index<<endl;
-    cout << endl <<"++ " <<edge.start.x<<","<<edge.start.y<<" ++" << endl;
     vector<Point> temp = graph.vertices;
     graph.vertices.clear();
       for(int i=0; i<temp.size(); i++) {
         if(i!=index) graph.vertices.push_back(temp[i]);
       }
-    Utilities util;
-    util.output_graph_vertices(&graph);
     edge.end = new_point;
     graph.edges.push_back(edge);
     if(check_exist_point(new_point, graph) == false) {
-        new_point.print();
         graph.vertices.push_back(new_point);
     }
-    util.output_graph_vertices(&graph);
     graph.get_boundaries();
 }
 void RMST::process_one_left(Graph& graph) {
-  cout << endl << "--- process_one_left ---" << endl;
+  //cout << endl << "--- process_one_left ---" << endl;
   if(graph.lefts.size()!=1) {
     cout << endl << "! process_one_left !" << endl;
     exit(0);
@@ -223,7 +250,7 @@ void RMST::process_one_left(Graph& graph) {
   add_single_edge(graph, LEFT);
 }
 void RMST::process_one_right(Graph& graph) {
-  cout << endl << "--- process_one_right ---" << endl;
+  //cout << endl << "--- process_one_right ---" << endl;
     if(graph.rights.size()!=1) {
       cout << endl << "! process_one_left !" << endl;
       exit(0);
@@ -231,7 +258,7 @@ void RMST::process_one_right(Graph& graph) {
   add_single_edge(graph, RIGHT);
 }
 void RMST::process_one_top(Graph& graph) {
-  cout << endl << "--- process_one_top ---" << endl;
+  //cout << endl << "--- process_one_top ---" << endl;
     if(graph.tops.size()!=1) {
       cout << endl << "! process_one_left !" << endl;
       exit(0);
@@ -239,7 +266,7 @@ void RMST::process_one_top(Graph& graph) {
   add_single_edge(graph, TOP);
 }
 void RMST::process_one_bottom(Graph& graph) {
-  cout << endl << "--- process_one_bottom ---" << endl;
+  //cout << endl << "--- process_one_bottom ---" << endl;
     if(graph.bottoms.size()!=1) {
       cout << endl << "! process_one_left !" << endl;
       exit(0);
@@ -264,75 +291,49 @@ bool RMST::check_exist_point(const Point& point, const Graph& graph) {
   }
   return false;
 }
-void RMST::output_trees(const Plane& plane) {
-  Utilities util;
-  Node* iter = trees_head;
-  while(iter) {
-    util.output_graph(&iter->graph);
-    util.output_steiner_tree_diagram(plane, (*iter).graph);
-    iter = iter->next;
-  }
-}
+
 // class Node
 Node::Node() {
   next = NULL;
 }
 // class Utilities
-void Utilities::output_vector_points(vector<Point> points) {
-  cout << endl << "--- vector_points ---" << endl;
-  cout << "size=" << points.size() << endl;
-  for(int i=0; i<points.size(); i++) {
-    cout << "(" << points[i].x <<"," << points[i].y << ") "; 
+void Utilities::output_tree_queue(const Plane& plane, const RMST& rmst) {
+  Utilities util;
+  Node* iter = rmst.tree_queue_head;
+  while(iter) {
+    cout << (*iter).graph;
+    //util.output_graph_boundaries((*iter).graph);
+    util.output_steiner_tree_diagram(plane, (*iter).graph);
+    iter = iter->next;
   }
-  cout << endl;
 }
-void Utilities::output_graph(Graph* graph) {
-  cout << endl << "--- graph ---" << endl;
-  output_graph_vertices(graph);
-  output_graph_edges(graph);
-  output_graph_boundaries(graph);
-  cout << endl;
-}
-void Utilities::output_graph_vertices(Graph* graph) {
-  cout << endl << "--- graph_vertices ---" << endl;
-  output_vector_points(graph->vertices);
-  cout << endl;
-}
-void Utilities::output_graph_edges(Graph* graph) {
-  cout << endl << "--- graph_edges ---" << endl;
-  for(int i=0; i<graph->edges.size(); i++) {
-    cout << "(<" << graph->edges[i].start.x << "," << graph->edges[i].start.y << ">, " 
-      << "<" << graph->edges[i].end.x << "," << graph->edges[i].end.y << "> :" << graph->edges[i].shape <<") ";
-  }
-  cout << endl;
-}
-void Utilities::output_graph_boundaries(Graph* graph) {
+void Utilities::output_graph_boundaries(const Graph& graph) {
   vector<Point> points;
   cout << endl << "--- graph_boundaries ---" << endl;
   cout << endl << "--- left ---" << endl;
   points.clear();
-  for(int i=0; i<graph->lefts.size(); i++) {
-    points.push_back(graph->vertices[graph->lefts[i]]);
+  for(int i=0; i<graph.lefts.size(); i++) {
+    points.push_back(graph.vertices[graph.lefts[i]]);
   }
-  output_vector_points(points);
+  cout << points;
   cout << endl << "--- right ---" << endl;
   points.clear();
-  for(int i=0; i<graph->rights.size(); i++) {
-    points.push_back(graph->vertices[graph->rights[i]]);
+  for(int i=0; i<graph.rights.size(); i++) {
+    points.push_back(graph.vertices[graph.rights[i]]);
   }
-  output_vector_points(points);
+  cout << points;
   cout << endl << "--- top ---" << endl;
   points.clear();
-  for(int i=0; i<graph->tops.size(); i++) {
-    points.push_back(graph->vertices[graph->tops[i]]);
+  for(int i=0; i<graph.tops.size(); i++) {
+    points.push_back(graph.vertices[graph.tops[i]]);
   }
-  output_vector_points(points);
+  cout << points;
   cout << endl << "--- bottom ---" << endl;
   points.clear();
-  for(int i=0; i<graph->bottoms.size(); i++) {
-    points.push_back(graph->vertices[graph->bottoms[i]]);
+  for(int i=0; i<graph.bottoms.size(); i++) {
+    points.push_back(graph.vertices[graph.bottoms[i]]);
   }
-  output_vector_points(points);
+  cout << points;
   cout << endl;
 }
 void Utilities::output_steiner_tree_diagram(const Plane& plane, const Graph& graph) {
@@ -384,7 +385,7 @@ void Utilities::output_steiner_tree_diagram(const Plane& plane, const Graph& gra
     }
    pixels[index_row][index_col] = VERTEX;
   }
-  cout << endl << "&&&&&&&&&&& size= "<<graph.edges.size() << endl;
+
   for(int i=0; i<graph.edges.size(); i++) {
     index_row = 0; 
     index_col = 0;

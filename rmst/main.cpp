@@ -5,13 +5,15 @@ using namespace std;
 int main() {
 
   cout << endl << "########## Begin of Program ##########" << endl;
-
+  
+  Utilities util;
   Plane plane;
+  cout << plane.terminals;
   RMST rmst(plane);
 
   rmst.travel_trees();
 
-  rmst.output_trees(plane);
+  util.output_tree_queue(plane,rmst);
 
   cout << endl << "########### End of Program ###########" << endl;
 
