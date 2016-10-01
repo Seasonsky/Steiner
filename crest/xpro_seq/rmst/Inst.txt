@@ -1,3 +1,0 @@
-sky@ubuntu:~/xpro/rmst$ ./rmst -p -l < sample.in
-NUM_POINTS: 50  CPU_SEC: -0.004000 TREE_LEN: 6044537.000000 
-sky@ubuntu:~/xpro/rmst$ 
