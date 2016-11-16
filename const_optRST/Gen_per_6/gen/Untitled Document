@@ -1,0 +1,45 @@
+bool OptRST::transform_bot_left(Graph* graph) {
+  Utility util;
+  if (graph == NULL) {
+    cout << endl << "!!! graph==NULL !!!" << endl;
+    exit(-1);
+  }
+  Point old_left;
+  Point old_right;
+  if(graph->boundary_left[0].x < graph->boundary_left[1].x) {
+     old_left = graph->boundary_left[0];
+     old_right = graph->boundary_left[1];
+  } else {
+     old_left = graph->boundary_left[1];
+     old_right = graph->boundary_left[0];     
+  }
+  if(old_left.x >= old_right.x) {
+    cout <<endl <<"old_left.x >= old_right.x"<<endl;
+    exit(-1);
+  }
+  Point new_point;
+  new_point.x = old_left.x; 
+  new_point.y = old_left.y + 1;
+
+  V_Segment vs;
+  vs.shape = BOT;
+  vs.bot = old_left;
+  vs.top = new_point;
+  graph->v_segments.push_back(vs);
+  graph->v_vector[vs.bot.y]++;
+  if (!single_exist(new_point, graph)) {
+    replace_single(new_point, old_left, graph);
+  } else
+    delete_single(old_left, graph);
+ 
+  H_Segment hs;
+  hs.shape = LEFT;
+  hs.left = old_left;
+  hs.right = old_right;
+  graph->h_segments.push_back(hs);
+  graph->h_vector[hs.left.x]++;  
+  delete_single(old_right, graph);
+
+  (*graph).update();
+}
+
